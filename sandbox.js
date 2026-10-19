@@ -26,6 +26,12 @@ export function createSandbox({scene,person,head,camera,canvas,onClick,onImpact,
   canvas.addEventListener('pointerdown',begin);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',e=>end(e));canvas.addEventListener('pointercancel',e=>end(e,true));
   canvas.addEventListener('lostpointercapture',e=>end(e,true));
   function kick(strength=1,direction=1,launch=false){if(state.drag)return;sleep=0;state.vx+=direction*strength*2.5;state.vy=Math.max(state.vy,launch?8.5:1.9+strength);state.omega+=direction*strength*2.7;for(const j of jointState)j.v+=(Math.random()-.5)*strength*18;}
+  function impulse({x,y,spin},style=0){if(state.drag)return;sleep=0;
+    if(style===1){state.vx*=.15;state.angle*=.35;state.omega*=.2;}
+    if(style===4){state.vx*=.25;state.omega*=.15;}
+    state.vx=THREE.MathUtils.clamp(state.vx+x,-14,14);state.vy=y<0?y:Math.max(state.vy,y);state.omega=THREE.MathUtils.clamp(state.omega+spin,-14,14);
+    for(const j of jointState)j.v+=(Math.random()-.5)*(Math.abs(x)+Math.abs(y))*2;
+  }
   function impact(speed,wall){if(speed<2.2||cooldown>0)return;cooldown=.2;onImpact(speed,wall);for(const j of jointState)j.v+=(Math.random()-.5)*speed*3;}
   function reset(){Object.assign(state,{x:0,y:1.4,vx:0,vy:0,angle:0,omega:0,drag:false});press=null;sleep=0;canvas.classList.remove('grabbing');jointState.forEach(j=>{j.angle=0;j.v=0;});}
   function update(dt,time,reduced){axes();cooldown=Math.max(0,cooldown-dt);const bound=limits();if(state.drag){state.x=THREE.MathUtils.lerp(state.x,targetX,Math.min(1,dt*35));state.y=THREE.MathUtils.lerp(state.y,targetY,Math.min(1,dt*35));state.angle=THREE.MathUtils.lerp(state.angle,THREE.MathUtils.clamp(-state.vx*.08,-.6,.6),dt*10);}
@@ -45,5 +51,5 @@ export function createSandbox({scene,person,head,camera,canvas,onClick,onImpact,
     head.rotation.z+=THREE.MathUtils.clamp(-state.vx*.012,-.12,.12);
   }
   function anchor(y=2.5){return person.localToWorld(new THREE.Vector3(0,y,0));}
-  return {state,kick,reset,update,anchor};
+  return {state,kick,impulse,reset,update,anchor};
 }
