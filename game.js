@@ -18,6 +18,9 @@ scene.add(new THREE.HemisphereLight(0xfff8e7,0x6f795d,2.7));
 const sun=new THREE.DirectionalLight(0xffefcd,4);sun.position.set(-3,8,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10});sun.shadow.normalBias=.035;scene.add(sun);
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
 const m={floor:mat('#b9c1a4'),wall:mat('#cbd0b9'),wall2:mat('#b3bea5'),cream:mat('#efeddb'),wood:mat('#b38d5e'),woodLight:mat('#d2b07c'),dark:mat('#424f41'),green:mat('#647458'),leaf:mat('#5d794a'),pot:mat('#d5b28c'),orange:mat('#ee8050'),suit:mat('#686e67'),pants:mat('#444e47'),shoe:mat('#303c33'),skin:mat('#d8ac83'),white:mat('#f0f0de'),black:mat('#29372e')};
+const bands=new THREE.DataTexture(new Uint8Array([90,175,255]),3,1,THREE.RedFormat);bands.minFilter=THREE.NearestFilter;bands.magFilter=THREE.NearestFilter;bands.needsUpdate=true;
+const toon=color=>new THREE.MeshToonMaterial({color,gradientMap:bands});
+m.suit=toon('#66a4c3');m.pants=toon('#426a90');m.shoe=toon('#344253');m.skin=toon('#f4bc88');m.white=toon('#fff5db');
 function box(w,h,d,material,x=0,y=0,z=0,parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
 function ball(r,material,x,y,z,parent=scene,sx=1,sy=1,sz=1){const o=new THREE.Mesh(new THREE.SphereGeometry(r,24,18),material);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
 function cylinder(rt,rb,h,material,x,y,z,parent=scene){const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,20),material);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
@@ -57,17 +60,23 @@ const chair=new THREE.Group();chair.position.set(3.1,0,1);scene.add(chair);box(.
 // Comic stand-in: small body, deliberately oversized photographic head.
 const person=new THREE.Group();person.position.set(-.65,0,.35);scene.add(person);
 const hitMeshes=[];
-for(const x of [-.23,.23]){box(.29,.76,.34,m.pants,x,.52,0,person);ball(.2,m.shoe,x,.17,.13,person,1, .65,1.6);}
+for(const x of [-.23,.23]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.48,6,12),m.pants);leg.position.set(x,.52,0);leg.castShadow=true;person.add(leg);ball(.22,m.shoe,x,.17,.15,person,1.05, .7,1.65);}
 const torso=ball(.6,m.suit,0,1.35,0,person,.88,1.08,.6);hitMeshes.push(torso);
 const shirt=box(.27,.78,.07,m.white,0,1.4,.34,person);const tie=box(.1,.48,.06,m.orange,0,1.42,.39,person);tie.rotation.z=-.08;
 for(const side of [-1,1]){const arm=new THREE.Group();arm.position.set(side*.48,1.68,0);person.add(arm);const sleeve=ball(.19,m.suit,side*.08,-.3,.01,arm,.85,2,.85);sleeve.rotation.z=side*.15;ball(.16,m.skin,side*.13,-.67,.04,arm,.8,1.15,.9);}
 const head=new THREE.Group();head.position.set(0,2.62,0);person.add(head);head.quaternion.copy(camera.quaternion);
 const headBack=ball(.72,m.skin,0,0,-.06,head,.95,1.18,.45);hitMeshes.push(headBack);
-const faceCanvas=document.createElement('canvas');faceCanvas.width=512;faceCanvas.height=640;const ctx=faceCanvas.getContext('2d');
+headBack.visible=false;
+const faceCanvas=document.createElement('canvas');faceCanvas.width=512;faceCanvas.height=512;const ctx=faceCanvas.getContext('2d');
 ctx.fillStyle='#d8ac83';ctx.beginPath();ctx.ellipse(256,320,246,312,0,0,Math.PI*2);ctx.fill();
 const faceTexture=new THREE.CanvasTexture(faceCanvas);faceTexture.colorSpace=THREE.SRGBColorSpace;
-const face=new THREE.Mesh(new THREE.PlaneGeometry(1.48,1.85),new THREE.MeshBasicMaterial({map:faceTexture,transparent:true,side:THREE.DoubleSide}));face.position.z=.28;head.add(face);hitMeshes.push(face);
-const portrait=new Image();portrait.onload=()=>{ctx.clearRect(0,0,512,640);ctx.save();ctx.beginPath();ctx.ellipse(256,320,246,311,0,0,Math.PI*2);ctx.clip();ctx.drawImage(portrait,137,20,313,434,0,0,512,640);ctx.restore();faceTexture.needsUpdate=true;};portrait.onerror=()=>{ctx.fillStyle='#393e37';ctx.font='bold 50px Arial';ctx.textAlign='center';ctx.fillText('DARIO',256,280);ctx.fillText('◉  ◉',256,360);faceTexture.needsUpdate=true;};portrait.src='./assets/dario.webp';
+const face=new THREE.Mesh(new THREE.PlaneGeometry(2.05,2.05),new THREE.MeshBasicMaterial({map:faceTexture,transparent:true,side:THREE.DoubleSide,depthWrite:false}));face.position.z=.28;head.add(face);hitMeshes.push(face);
+const portrait=new Image();portrait.onload=()=>{ctx.clearRect(0,0,512,512);ctx.drawImage(portrait,0,0,512,512);faceTexture.needsUpdate=true;};portrait.onerror=()=>{ctx.fillStyle='#393e37';ctx.font='bold 50px Arial';ctx.textAlign='center';ctx.fillText('DARIO',256,240);ctx.fillText('◉  ◉',256,320);faceTexture.needsUpdate=true;};portrait.src='./assets/dario-cartoon-v2.png';
+const outlineMat=new THREE.MeshBasicMaterial({color:'#293c42',side:THREE.BackSide});
+const bodyMeshes=[];person.traverse(o=>{if(o.isMesh&&o!==face&&o!==headBack)bodyMeshes.push(o);});
+for(const mesh of bodyMeshes){const outline=new THREE.Mesh(mesh.geometry,outlineMat);outline.scale.setScalar(1.07);mesh.add(outline);}
+const dizzy=new THREE.Group();person.add(dizzy);dizzy.position.y=3.57;dizzy.visible=false;
+for(let i=0;i<5;i++){const shape=new THREE.Shape();for(let j=0;j<10;j++){const a=j*Math.PI/5+Math.PI/2,r=j%2?.055:.13;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(j===0)shape.moveTo(x,y);else shape.lineTo(x,y);}shape.closePath();const star=new THREE.Mesh(new THREE.ShapeGeometry(shape),new THREE.MeshBasicMaterial({color:'#ffcb45',side:THREE.DoubleSide}));const a=i*Math.PI*.4;star.position.set(Math.cos(a)*.68,Math.sin(a)*.04,Math.sin(a)*.32);star.quaternion.copy(camera.quaternion);dizzy.add(star);}
 const ring=new THREE.Mesh(new THREE.TorusGeometry(.72,.018,8,64),m.cream);ring.rotation.x=-Math.PI/2;ring.position.set(-.65,.015,.35);scene.add(ring);
 // Animated toy props are placed in the camera's plane.
 const toy=new THREE.Group();scene.add(toy);const props=[];
@@ -106,6 +115,7 @@ new ResizeObserver(resize).observe(arena);resize();
 function tick(ms){const dt=Math.min((ms-rafTime)/1000||.016,.04);rafTime=ms;elapsed=ms/1000;hitAge+=dt;superAge+=dt;const k=Math.exp(-hitAge*6),s=Math.sin(hitAge*27);const power=superAge<1.2?Math.sin(superAge*Math.PI/1.2):0;
 person.position.y=reduced?0:Math.abs(Math.sin(hitAge*15))*k*.28+power*1.6;person.rotation.z=reduced?0:hitDirection*s*k*.35+power*Math.PI*2;person.rotation.x=reduced?0:s*k*.17;person.rotation.y=reduced?0:Math.sin(elapsed*.7)*.055;head.rotation.z=reduced?0:Math.sin(elapsed*1.5)*.025+s*k*.1;
 ring.scale.setScalar(1+Math.sin(elapsed*2)*.035);
+dizzy.visible=hitAge<1.25;dizzy.rotation.y=reduced?0:elapsed*3;
 if(hitAge<.4){const p=person.position.clone().add(new THREE.Vector3(.5,2.2,1.2));toy.position.copy(p);toy.quaternion.copy(camera.quaternion);const a=Math.sin(Math.min(hitAge/.27,1)*Math.PI);toy.translateX((1-a)*1.9);toy.translateY(-.3+(1-a)*-.8);toy.rotation.z=-.4+a*.8;toy.scale.setScalar(tool===1?1.1:1);}else toy.visible=false;
 for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.v.y-=9*dt;p.mesh.position.addScaledVector(p.v,dt);p.mesh.rotation.x+=dt*5;p.mesh.rotation.z+=dt*3;p.mesh.scale.setScalar(Math.min(1,p.life*3));if(p.life<=0){scene.remove(p.mesh);p.mesh.geometry.dispose();particles.splice(i,1);}}
 if(combo&&elapsed-lastHit>1.3){combo=0;$('combo').classList.remove('show');}

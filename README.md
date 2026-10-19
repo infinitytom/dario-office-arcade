@@ -22,5 +22,6 @@ GitHub Pages：从 `main` 分支根目录发布。所有脚本和图片均在本
 ## 素材
 
 - Three.js 0.170.0，MIT，见 `vendor/THREE-LICENSE.txt`。
-- Dario Amodei 头像：[Anthropic 官方领导团队页面](https://www.anthropic.com/company/leadership)。图像版权归原权利人；用于本非官方戏仿演示。
+- 参考照片：[Anthropic 官方领导团队页面](https://www.anthropic.com/company/leadership)。图像版权归原权利人；用于本非官方戏仿演示。
+- 游戏头像：使用内置 imagegen 根据参考照片生成的透明卡通头像，位于 `assets/dario-cartoon-v2.png`。
 - 场景和卡通道具由代码生成。
