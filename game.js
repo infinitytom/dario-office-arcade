@@ -1,11 +1,12 @@
 import * as THREE from './vendor/three.module.js';
+import {createSandbox} from './sandbox.js?v=feedback-3';
 
 const $ = id => document.getElementById(id);
 const canvas = $('game'), arena = $('arena');
 let renderer;
 try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false}); }
 catch { $('loading').innerHTML='这个浏览器暂时无法开启 3D<span>请开启硬件加速，或换一个支持 WebGL 的浏览器。</span>'; throw new Error('WebGL unavailable'); }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -38,7 +39,7 @@ for(let i=0;i<9;i++){const h=.4+((i*7)%5)*.25;box(.4,h,.02,mat(i%2?'#c3d1bb':'#b
 for(const x of [-1.38,0,1.38]) box(.055,3.3,.12,m.cream,x,0,.13,win);
 box(4.2,.06,.15,m.cream,0,0,.15,win);box(4.5,.13,.4,m.cream,0,-1.8,.12,win);
 for(let i=0;i<6;i++)box(4.4,.04,.1,mat('#b9bd9e'),0,1.7-i*.13,.19,win);
-const poster=label('THINK LESS.\nLIVE MORE.',1.75,1.35,'#e9e4cf','#5c684e',36);poster.position.set(-2.5,3.2,-3.36);scene.add(poster);
+const poster=label('REGION NOT\nSUPPORTED',1.75,1.35,'#f5dfca','#a15138',36);poster.position.set(-2.5,3.2,-3.36);scene.add(poster);
 box(1.88,1.47,.08,m.wood,-2.5,3.2,-3.43);
 const clockFace=label('AFTER\nHOURS',.72,.72,'#e7e8d6','#617154',40);clockFace.position.set(.3,4,-3.36);scene.add(clockFace);
 // Credenza, books, and a tiny office succulent.
@@ -51,7 +52,12 @@ plant(-5.9,-1.4,1.4);const tiny=plant(-3.4,-2.7,.45);tiny.position.y=1.37;
 const desk=new THREE.Group();desk.position.set(3.25,0,-.7);scene.add(desk);
 box(3.15,.16,1.65,m.woodLight,0,1.38,0,desk);for(const x of [-1.27,1.27])for(const z of [-.56,.56])box(.09,1.3,.09,m.dark,x,.68,z,desk);
 box(.5,.05,.35,m.dark,0,1.5,-.3,desk);box(.08,.42,.08,m.dark,0,1.69,-.4,desk);box(1.36,.9,.09,m.dark,0,2.15,-.45,desk);
-const screen=label('ALL SYSTEMS\nON A BREAK',1.21,.75,'#263f35','#b6d4a4',32);screen.position.set(0,2.15,-.394);desk.add(screen);
+const screen=label('ERROR 403\nACCESS DENIED',1.21,.75,'#432b28','#ffb68c',32);screen.position.set(0,2.15,-.394);desk.add(screen);
+// A fictional access gate opens for the charged special move.
+const gate=new THREE.Group();gate.position.set(.15,1.65,-3.18);scene.add(gate);
+const gateLeft=box(.62,2.7,.1,m.green,-.33,0,0,gate),gateRight=box(.62,2.7,.1,m.green,.33,0,0,gate);
+for(let i=0;i<5;i++){box(.62,.07,.12,m.orange,0,-.9+i*.43,.08,gateLeft);box(.62,.07,.12,m.orange,0,-.9+i*.43,.08,gateRight);}
+const gateSign=label('403',.72,.4,'#f5dfca','#a15138',72);gateSign.position.set(0,.3,.16);gate.add(gateSign);
 box(.8,.05,.29,m.cream,0,1.51,.39,desk);for(let i=0;i<3;i++)box(.55,.035,.7,m.white,-.98,1.52+i*.04,.1,desk);
 cylinder(.13,.12,.28,m.orange,.95,1.6,.4,desk);const handle=new THREE.Mesh(new THREE.TorusGeometry(.11,.03,8,16),m.orange);handle.position.set(1.1,1.62,.4);desk.add(handle);
 cylinder(.23,.23,.04,m.dark,1.05,1.51,-.48,desk);const pole=cylinder(.025,.025,.65,m.dark,1.05,1.85,-.48,desk);pole.rotation.z=-.25;const shade=new THREE.Mesh(new THREE.ConeGeometry(.3,.27,20,1,true),m.green);shade.position.set(.95,2.2,-.48);desk.add(shade);
@@ -60,10 +66,10 @@ const chair=new THREE.Group();chair.position.set(3.1,0,1);scene.add(chair);box(.
 // Comic stand-in: small body, deliberately oversized photographic head.
 const person=new THREE.Group();person.position.set(-.65,0,.35);scene.add(person);
 const hitMeshes=[];
-for(const x of [-.23,.23]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.48,6,12),m.pants);leg.position.set(x,.52,0);leg.castShadow=true;person.add(leg);ball(.22,m.shoe,x,.17,.15,person,1.05, .7,1.65);}
+for(const x of [-.23,.23]){const limb=new THREE.Group();limb.position.set(x,.9,0);limb.userData.limb=true;person.add(limb);const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.48,6,12),m.pants);leg.position.set(0,-.38,0);leg.castShadow=true;limb.add(leg);ball(.22,m.shoe,0,-.73,.15,limb,1.05,.7,1.65);}
 const torso=ball(.6,m.suit,0,1.35,0,person,.88,1.08,.6);hitMeshes.push(torso);
 const shirt=box(.27,.78,.07,m.white,0,1.4,.34,person);const tie=box(.1,.48,.06,m.orange,0,1.42,.39,person);tie.rotation.z=-.08;
-for(const side of [-1,1]){const arm=new THREE.Group();arm.position.set(side*.48,1.68,0);person.add(arm);const sleeve=ball(.19,m.suit,side*.08,-.3,.01,arm,.85,2,.85);sleeve.rotation.z=side*.15;ball(.16,m.skin,side*.13,-.67,.04,arm,.8,1.15,.9);}
+for(const side of [-1,1]){const arm=new THREE.Group();arm.position.set(side*.48,1.68,0);arm.userData.limb=true;person.add(arm);const sleeve=ball(.19,m.suit,side*.08,-.3,.01,arm,.85,2,.85);sleeve.rotation.z=side*.15;ball(.16,m.skin,side*.13,-.67,.04,arm,.8,1.15,.9);}
 const head=new THREE.Group();head.position.set(0,2.62,0);person.add(head);head.quaternion.copy(camera.quaternion);
 const headBack=ball(.72,m.skin,0,0,-.06,head,.95,1.18,.45);hitMeshes.push(headBack);
 headBack.visible=false;
@@ -83,45 +89,57 @@ const toy=new THREE.Group();scene.add(toy);const props=[];
 const glove=new THREE.Group();ball(.38,m.orange,0,0,0,glove,1,1.1,.85);ball(.19,m.orange,-.29,-.08,.03,glove,.8,1.1,1);box(.43,.24,.37,m.cream,0,-.35,0,glove);box(.35,.12,.39,m.orange,0,-.42,0,glove);props.push(glove);
 const hammer=new THREE.Group();cylinder(.07,.07,1.1,m.woodLight,0,-.35,0,hammer);const hammerHead=cylinder(.28,.28,.95,m.orange,0,.2,0,hammer);hammerHead.rotation.z=Math.PI/2;for(const x of [-.5,.5]){const cap=cylinder(.32,.32,.09,m.cream,x,.2,0,hammer);cap.rotation.z=Math.PI/2;}props.push(hammer);
 const fish=new THREE.Group();ball(.28,mat('#84b7ac'),0,0,0,fish,1.6,.65,.55);const tail=new THREE.Mesh(new THREE.ConeGeometry(.25,.4,3),mat('#6a9d91'));tail.rotation.z=-Math.PI/2;tail.position.x=-.53;fish.add(tail);ball(.045,m.black,.28,.07,.15,fish);props.push(fish);
+const slipper=new THREE.Group();ball(.3,toon('#efb48f'),0,0,0,slipper,.85,1.7,.28);const strap=ball(.24,toon('#e76f51'),0,.17,.07,slipper,1,1,.6);props.push(slipper);
+const basketball=new THREE.Group();ball(.4,m.orange,0,0,0,basketball);for(const a of [0,Math.PI/2]){const seam=new THREE.Mesh(new THREE.TorusGeometry(.403,.014,6,32),m.dark);seam.rotation.y=a;basketball.add(seam);}props.push(basketball);
+const plunger=new THREE.Group();cylinder(.045,.045,1.05,m.woodLight,0,-.23,0,plunger);const cup=new THREE.Mesh(new THREE.SphereGeometry(.34,20,12,0,Math.PI*2,0,Math.PI/2),toon('#d86b54'));cup.position.y=.25;plunger.add(cup);props.push(plunger);
 props.forEach(p=>{p.visible=false;toy.add(p);});toy.visible=false;
 
 let score=0,hits=0,combo=0,lastHit=-100,tool=0,charge=0,sound=false,audio=null,hitAge=10,hitDirection=1,shake=0,superAge=10,elapsed=0,rafTime=0;
 let best=0;try{best=Number(localStorage.getItem('dario-arcade-best'))||0;}catch{}$('best').textContent=best;
+const toolNames=['申诉拳套','反馈锤','咸鱼通行证','拖鞋申诉','反馈弹力球','疏通访问'],costs=[0,0,0,60,120,180],strengths=[1,1.8,.7,1.4,2.1,2.8];
+let coins=0,unlocked=[0,1,2],wallHits=0,powerUses=0,peakCombo=0,gateOpen=0;const earned=new Set();
+try{const saved=JSON.parse(localStorage.getItem('dario-feedback-save')||'{}');coins=Number.isFinite(saved.coins)?Math.max(0,Math.floor(saved.coins)):0;if(Array.isArray(saved.unlocked))unlocked=[...new Set([0,1,2,...saved.unlocked.filter(i=>Number.isInteger(i)&&i>=0&&i<6)])];}catch{}
+function saveProgress(){try{localStorage.setItem('dario-feedback-save',JSON.stringify({coins,unlocked}));}catch{}}
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const particles=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
-const lines=['“ 这拳……需要更多算力。”','“ 我们可以先对齐一下吗？”','“ 好的，今天不加班。”','“ 等一下，我的上下文满了！”','“ 我宣布：现在就下班。”','“ 这也在缩放定律里吗？”','“ 请给我一个撤回按钮。”','“ 你已达到今日快乐上限……骗你的。”'];
-const words=[['POW!','快乐 +1','下班！'],['BONK!','班味 -1','敲开心'],['摸鱼成功','啪叽！','FISH!']];
+const lines=['“ 这条反馈，确实很有分量。”','“ 地区限制？这下收到反馈了。”','“ 申诉通道，这回没堵住。”','“ 我的上下文里全是你的反馈！”','“ 能不能把这封申诉轻一点寄？”','“ 这次不是自动回复了……”','“ 不支持的地区，支持的拳头。”','“ 先把门打开，再谈愿景。”'];
+const words=[['申诉已送达！','不支持？接招！','反馈 +1'],['敲开访问！','BONK!','拒绝被拒绝'],['咸鱼也要通行','啪叽！','FISH!'],['拖鞋申诉！','啪！','人工反馈'],['反馈反弹！','BOING!','已读请回'],['疏通访问！','啵！','开门！']];
+const sandbox=createSandbox({scene,person,head,camera,canvas,onClick:()=>hit(),onImpact:wallImpact,onThrow:speed=>{if(speed>2){const p=project(sandbox.anchor());floatText('申诉已甩出！',p.x,p.y);}},onGrab:()=>{$('hint').style.opacity=0;$('mode-label').textContent='抓住了！松手把反馈甩出去';$('bubble').textContent='“ 等等，反馈不需要这么亲自送……”';}});
 function audioReady(){if(!audio)try{audio=new (window.AudioContext||window.webkitAudioContext)();}catch{}if(audio?.state==='suspended')audio.resume().catch(()=>{});}
 function beep(big=false){if(!sound)return;audioReady();if(!audio)return;const osc=audio.createOscillator(),gain=audio.createGain();osc.type=tool===2?'sine':'triangle';osc.frequency.setValueAtTime(big?160:tool===1?220:340,audio.currentTime);osc.frequency.exponentialRampToValueAtTime(big?35:65,audio.currentTime+.17);gain.gain.setValueAtTime(.16,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.2);osc.connect(gain).connect(audio.destination);osc.start();osc.stop(audio.currentTime+.22);}
 function project(v){const p=v.clone().project(camera);return {x:(p.x*.5+.5)*arena.clientWidth,y:(-.5*p.y+.5)*arena.clientHeight};}
 function floatText(text,x,y,scoreStyle=false){const el=document.createElement('div');el.className='floater'+(scoreStyle?' score-float':'');el.textContent=text;el.style.left=x+'px';el.style.top=y+'px';$('floaters').append(el);setTimeout(()=>el.remove(),900);}
-function updateHUD(){ $('score').textContent=String(score).padStart(4,'0');$('best').textContent=best;$('meter').style.width=(charge*10)+'%';$('power').classList.toggle('ready',charge>=10);$('power-text').textContent=charge>=10?'能量已满 · 按 F 释放':`再击中 ${10-charge} 次充能`;$('rank').textContent=score>=3000?'下班传说':score>=1000?'解压大师':score>=300?'摸鱼达人':'初来乍到';}
-function addParticles(big=false){for(let i=0;i<(big?55:12);i++){const mesh=box(.07,.07,.07,[m.orange,m.cream,m.green][i%3],person.position.x,2.5,.65);const v=new THREE.Vector3((Math.random()-.5)*5,Math.random()*4+1,(Math.random()-.5)*4);particles.push({mesh,v,life:.6+Math.random()*.5});}}
-function hit(big=false){const now=performance.now()/1000;if(!big&&now-lastHit<.115)return;combo=now-lastHit<1.3?combo+1:1;lastHit=now;hits++;charge=Math.min(10,charge+1);const points=(tool+1)*10*Math.min(combo,10)*(big?5:1);score+=points;if(score>best){best=score;try{localStorage.setItem('dario-arcade-best',best);}catch{}}
+function updateHUD(){ $('score').textContent=String(score).padStart(4,'0');$('best').textContent=best;$('coins').textContent=coins;$('meter').style.width=(charge*10)+'%';$('power').classList.toggle('ready',charge>=10);$('power-text').textContent=charge>=10?'开门能量已满 · 按 F':`再击中 ${10-charge} 次充能`;$('rank').textContent=score>=3000?'反馈传说':score>=1000?'申诉达人':score>=300?'强烈反馈':'准备反馈';document.querySelectorAll('.tool').forEach((b,i)=>{const locked=!unlocked.includes(i);b.classList.toggle('locked',locked);b.classList.toggle('active',i===tool);b.querySelector('small').textContent=locked?`解锁 · ${costs[i]} 反馈币`:['这封申诉，有点分量','敲开那扇不支持的门','不让用？那就摸鱼','拖鞋也有话要说','会反弹的强烈反馈','把访问通道疏通'][i];});}
+function award(points,reward=0){score+=points;coins+=reward;if(score>best){best=score;try{localStorage.setItem('dario-arcade-best',best);}catch{}}saveProgress();}
+function missions(){const tasks=[['wall',wallHits,3,'撞墙反馈'],['combo',peakCombo,10,'连续申诉'],['power',powerUses,1,'打开大门']];for(const [key,n,max,name]of tasks){const complete=n>=max;if(complete&&!earned.has(key)){earned.add(key);award(0,30);const p=project(sandbox.anchor());floatText('任务完成 +30 币',p.x,p.y+40,true);}const el=$('mission-'+key);el.classList.toggle('done',complete);el.replaceChildren(document.createTextNode(name+' '));const b=document.createElement('b');b.textContent=complete?'✓':`${Math.min(n,max)}/${max}`;el.append(b);}}
+function wallImpact(speed,surface){if(sandbox.state.drag)return;hitAge=0;shake=reduced?0:.08;award(Math.round(speed*8),3);if(surface==='wall')wallHits++;const p=project(sandbox.anchor(1.8));floatText(surface==='wall'?'反馈有回响！':surface==='ceiling'?'顶格申诉！':'落地有声！',p.x,p.y);beep();addParticles();missions();updateHUD();arena.classList.add('impact');setTimeout(()=>arena.classList.remove('impact'),150);}
+function addParticles(big=false){const pos=sandbox.anchor();for(let i=0;i<(big?45:10);i++){const mesh=box(.07,.07,.07,[m.orange,m.cream,m.green][i%3],pos.x,pos.y,pos.z);const v=new THREE.Vector3((Math.random()-.5)*5,Math.random()*4+1,(Math.random()-.5)*4);particles.push({mesh,v,life:.6+Math.random()*.5});}}
+function hit(big=false){if(sandbox.state.drag)return;const now=performance.now()/1000;if(!big&&now-lastHit<.115)return;combo=now-lastHit<1.3?combo+1:1;peakCombo=Math.max(peakCombo,combo);lastHit=now;hits++;charge=Math.min(10,charge+1);const points=Math.round(strengths[tool]*10)*Math.min(combo,10)*(big?5:1);award(points,big?15:5);sandbox.kick(big?2.8:strengths[tool],hits%2?1:-1,big||tool===4);
 hitAge=0;hitDirection=hits%2?1:-1;shake=reduced?0:big?.26:.065;toy.visible=true;props.forEach((p,i)=>p.visible=i===tool);beep(big);addParticles(big);$('hint').style.opacity=0;$('combo').classList.toggle('show',combo>1);$('combo').querySelector('strong').textContent=combo;$('bubble').textContent=lines[(hits-1)%lines.length];
-const p=project(new THREE.Vector3(person.position.x,2.7,.6));floatText(big?'下！班！啦！':words[tool][Math.floor(Math.random()*3)],p.x+(Math.random()-.5)*110,p.y-20);floatText('+'+points,p.x+85,p.y+60,true);updateHUD();}
-function superHit(){if(charge<10){$('power-text').textContent=`还差 ${10-charge} 次，继续出拳！`;return;}superAge=0;hit(true);charge=0;updateHUD();$('bubble').textContent='“ 今天的会议取消。全员下班！”';}
-function selectTool(index){tool=index;document.querySelectorAll('.tool').forEach((b,i)=>b.classList.toggle('active',i===index));}
+const p=project(sandbox.anchor());floatText(big?'打！开！大！门！':words[tool][Math.floor(Math.random()*3)],p.x+(Math.random()-.5)*80,p.y-20);floatText('+'+points+` · +${big?15:5} 币`,p.x+60,p.y+60,true);missions();updateHUD();}
+function superHit(){if(sandbox.state.drag)return;if(charge<10){$('power-text').textContent=`还差 ${10-charge} 次，继续反馈！`;return;}superAge=0;hit(true);charge=0;gateOpen=4;powerUses++;missions();updateHUD();$('bubble').textContent='“ 游戏里的门开了！这条反馈够响亮。”';}
+function selectTool(index){if(!unlocked.includes(index)){if(coins<costs[index]){const p=project(sandbox.anchor());floatText(`还差 ${costs[index]-coins} 反馈币`,p.x,p.y,true);$('bubble').textContent='点击或甩飞角色赚反馈币，解锁搞怪道具。';return;}coins-=costs[index];unlocked.push(index);saveProgress();const p=project(sandbox.anchor());floatText(toolNames[index]+' 已解锁！',p.x,p.y);}tool=index;updateHUD();}
 document.querySelectorAll('.tool').forEach(b=>b.addEventListener('click',()=>selectTool(Number(b.dataset.tool))));
 $('power').addEventListener('click',superHit);
 $('sound').addEventListener('click',()=>{sound=!sound;if(sound)audioReady();$('sound').innerHTML='♪ <span>'+(sound?'ON':'OFF')+'</span>';$('sound').setAttribute('aria-label',sound?'关闭音效':'打开音效');if(sound)beep();});
-function reset(){score=0;hits=0;combo=0;charge=0;hitAge=10;superAge=10;lastHit=-100;shake=0;toy.visible=false;particles.forEach(p=>{scene.remove(p.mesh);p.mesh.geometry.dispose();});particles.length=0;$('floaters').replaceChildren();$('combo').classList.remove('show');$('hint').style.opacity=1;$('bubble').textContent='“ 我有一个关于 AI 的小想法……”';person.rotation.set(0,0,0);person.position.set(-.65,0,.35);updateHUD();}
+function reset(){score=0;hits=0;combo=0;charge=0;wallHits=0;powerUses=0;peakCombo=0;gateOpen=0;earned.clear();hitAge=10;superAge=10;lastHit=-100;shake=0;toy.visible=false;sandbox.reset();particles.forEach(p=>{scene.remove(p.mesh);p.mesh.geometry.dispose();});particles.length=0;$('floaters').replaceChildren();$('combo').classList.remove('show');$('hint').style.opacity=1;$('bubble').textContent='“ 地区不支持？你的反馈我收到了。”';missions();updateHUD();}
 $('reset').addEventListener('click',reset);
-canvas.addEventListener('pointerdown',e=>{canvas.focus({preventScroll:true});const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,camera);if(raycaster.intersectObjects(person.children,true).length)hit();else{const p=project(new THREE.Vector3(person.position.x,2,.35));floatText('瞄准中间的大头！',p.x,p.y,true);}});
-window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'){e.preventDefault();hit();}else if(['1','2','3'].includes(e.key))selectTool(Number(e.key)-1);else if(e.key.toLowerCase()==='f')superHit();});
+$('recall').addEventListener('click',()=>{sandbox.reset();hitAge=10;toy.visible=false;$('mode-label').textContent='点击出拳 · 拖拽甩飞';$('bubble').textContent='“ 我回来了。还有什么反馈？”';});
+window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'){e.preventDefault();hit();}else if(['1','2','3','4','5','6'].includes(e.key))selectTool(Number(e.key)-1);else if(e.key.toLowerCase()==='f')superHit();else if(e.key.toLowerCase()==='r')sandbox.reset();});
 const baseCamera=camera.position.clone();
 function resize(){const w=arena.clientWidth,h=arena.clientHeight,aspect=w/h;const vertical=aspect<1?5.8:6.2;camera.left=-vertical*aspect/2;camera.right=vertical*aspect/2;camera.top=vertical/2;camera.bottom=-vertical/2;if(aspect<1){camera.position.set(3.3,3.5,11);camera.lookAt(-.65,1.65,.35);}else{camera.position.copy(baseCamera);camera.lookAt(0,1.7,0);}camera.updateProjectionMatrix();head.quaternion.copy(camera.quaternion);renderer.setSize(w,h,false);}
 new ResizeObserver(resize).observe(arena);resize();
 function tick(ms){const dt=Math.min((ms-rafTime)/1000||.016,.04);rafTime=ms;elapsed=ms/1000;hitAge+=dt;superAge+=dt;const k=Math.exp(-hitAge*6),s=Math.sin(hitAge*27);const power=superAge<1.2?Math.sin(superAge*Math.PI/1.2):0;
-person.position.y=reduced?0:Math.abs(Math.sin(hitAge*15))*k*.28+power*1.6;person.rotation.z=reduced?0:hitDirection*s*k*.35+power*Math.PI*2;person.rotation.x=reduced?0:s*k*.17;person.rotation.y=reduced?0:Math.sin(elapsed*.7)*.055;head.rotation.z=reduced?0:Math.sin(elapsed*1.5)*.025+s*k*.1;
-ring.scale.setScalar(1+Math.sin(elapsed*2)*.035);
+head.quaternion.copy(camera.quaternion);sandbox.update(dt,elapsed,reduced);const feet=sandbox.anchor(0);ring.position.set(feet.x,.015,feet.z);ring.scale.setScalar(1+Math.sin(elapsed*2)*.035);ring.material.transparent=true;ring.material.opacity=Math.max(.15,1-sandbox.state.y*.15);
+gateOpen=Math.max(0,gateOpen-dt);const open=gateOpen>0?Math.min(1,gateOpen):0;gateLeft.position.x=THREE.MathUtils.lerp(gateLeft.position.x,-.33-open*.8,dt*6);gateRight.position.x=THREE.MathUtils.lerp(gateRight.position.x,.33+open*.8,dt*6);gateSign.visible=!open;
+if(!sandbox.state.drag)$('mode-label').textContent='点击出拳 · 拖拽甩飞';
 dizzy.visible=hitAge<1.25;dizzy.rotation.y=reduced?0:elapsed*3;
-if(hitAge<.4){const p=person.position.clone().add(new THREE.Vector3(.5,2.2,1.2));toy.position.copy(p);toy.quaternion.copy(camera.quaternion);const a=Math.sin(Math.min(hitAge/.27,1)*Math.PI);toy.translateX((1-a)*1.9);toy.translateY(-.3+(1-a)*-.8);toy.rotation.z=-.4+a*.8;toy.scale.setScalar(tool===1?1.1:1);}else toy.visible=false;
+if(hitAge<.4){const p=sandbox.anchor(2.2).add(new THREE.Vector3(.5,0,1.2));toy.position.copy(p);toy.quaternion.copy(camera.quaternion);const a=Math.sin(Math.min(hitAge/.27,1)*Math.PI);toy.translateX((1-a)*1.9);toy.translateY(-.3+(1-a)*-.8);toy.rotation.z=-.4+a*.8;toy.scale.setScalar(tool===1?1.1:1);}else toy.visible=false;
 for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.v.y-=9*dt;p.mesh.position.addScaledVector(p.v,dt);p.mesh.rotation.x+=dt*5;p.mesh.rotation.z+=dt*3;p.mesh.scale.setScalar(Math.min(1,p.life*3));if(p.life<=0){scene.remove(p.mesh);p.mesh.geometry.dispose();particles.splice(i,1);}}
 if(combo&&elapsed-lastHit>1.3){combo=0;$('combo').classList.remove('show');}
 if(shake>.002){camera.position.x+=(Math.random()-.5)*shake;camera.position.y+=(Math.random()-.5)*shake;shake*=.83;}else{const mobile=arena.clientWidth/arena.clientHeight<1;camera.position.lerp(mobile?new THREE.Vector3(3.3,3.5,11):baseCamera,.15);}
 renderer.render(scene,camera);requestAnimationFrame(tick);
 }
-updateHUD();renderer.render(scene,camera);$('loading').remove();requestAnimationFrame(tick);
+missions();updateHUD();renderer.render(scene,camera);$('loading').remove();requestAnimationFrame(tick);
 // Compact diagnostics for checking a deployed build without exposing game state globally.
 window.addEventListener('error',()=>document.body.dataset.gameError='true');
